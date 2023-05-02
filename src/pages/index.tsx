@@ -7,6 +7,7 @@ import { api } from "~/utils/api";
 
 const Home: NextPage = () => {
   const hello = api.example.hello.useQuery({ text: "from tRPC" });
+  const user = api.user.howdy.useQuery({ text: "from all of us at potatoes r us" });
 
   return (
     <>
@@ -47,6 +48,7 @@ const Home: NextPage = () => {
           <div className="flex flex-col items-center gap-2">
             <p className="text-2xl text-white">
               {hello.data ? hello.data.greeting : "Loading tRPC query..."}
+              {user.data ? user.data.greeting : "hello again"}
             </p>
             <AuthShowcase />
           </div>
