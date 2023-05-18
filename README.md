@@ -2,9 +2,11 @@
 
 The Social Site for your Spotify Playlists.
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+To run on local `npm run dev`
 
-## More about T3
+To run prisma on local `npx prisma studio`
+
+## Made with the T3 Stack
 
 If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
 

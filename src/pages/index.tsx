@@ -75,8 +75,8 @@ const AuthShowcase: React.FC = () => {
         {secretMessage && <span> - {secretMessage}</span>}
       </p>
 
-{/*       
-        {sessionData && (
+      
+        {/* {sessionData && (
           <p className="text-center text-2xl text-white">
             Access Token:{" "}
             <span className="text-green-400">
