@@ -74,6 +74,18 @@ const AuthShowcase: React.FC = () => {
         {sessionData && <span>Logged in as {sessionData.user?.name}</span>}
         {secretMessage && <span> - {secretMessage}</span>}
       </p>
+
+{/*       
+        {sessionData && (
+          <p className="text-center text-2xl text-white">
+            Access Token:{" "}
+            <span className="text-green-400">
+              {sessionData.user?.access_token}
+            </span>
+          </p>
+        )} */}
+
+      
       <button
         className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
         onClick={sessionData ? () => void signOut() : () => void signIn()}
