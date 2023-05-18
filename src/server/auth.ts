@@ -61,39 +61,49 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    // session: ({ session, user }) => ({
-    //   ...session,
-    //   user: {
-    //     ...session.user,
-    //     id: user.id,
-    //   },
-    // }),
-    jwt: ({ token, account, user }) => {
-      // If initial sign in
-      if (account && user) {
-        return {
-          ...token,
-          accessToken: account.access_token,
-          refreshToken: account.refresh_token,
-          username: account.providerAccountId,
-          accessTokenExpires: account.expires_at * 1000,
-        };
-      }
-      // Return previous token if access token is still valid
-      if (token && token.accessTokenExpires > Date.now()) {
-        console.log("EXISTING TOKEN IS VALID");
-        return token;
-      }
-      // Refresh token if token is expired
-      console.log("ACCESS TOKEN EXPIRED, REFRESHING...");
-      return await refreshAccessToken(token);
-    },
-    session: ({ session, token }) => {
-      session.user.accessToken = token.accessToken;
-      session.user.refreshToken = token.refreshToken;
-      session.user.username = token.username;
-    },
+    async session({ session, user }) {
+      session = { ...session, user: {
+        ...session.user,
+        id: user.id,
+      },
+    };
+
+    const getToken = await prisma.account.findFirst({
+      where: {
+        userId: user.id,
+      },
+    });
+
+    session.user.access_token = getToken?.access_token ?? undefined;
+      return session;
+
+    // jwt: ({ token, account, user }) => {
+    //   // If initial sign in
+    //   if (account && user) {
+    //     return {
+    //       ...token,
+    //       accessToken: account.access_token,
+    //       refreshToken: account.refresh_token,
+    //       username: account.providerAccountId,
+    //       accessTokenExpires: account.expires_at * 1000,
+    //     };
+    //   }
+    //   // Return previous token if access token is still valid
+    //   if (token && token.accessTokenExpires > Date.now()) {
+    //     console.log("EXISTING TOKEN IS VALID");
+    //     return token;
+    //   }
+    //   // Refresh token if token is expired
+    //   console.log("ACCESS TOKEN EXPIRED, REFRESHING...");
+    //   return await refreshAccessToken(token);
+    // },
+    // session: ({ session, token }) => {
+    //   session.user.accessToken = token.accessToken;
+    //   session.user.refreshToken = token.refreshToken;
+    //   session.user.username = token.username;
+    // },
   },
+
   adapter: PrismaAdapter(prisma),
   providers: [
     SpotifyProvider({
@@ -110,7 +120,7 @@ export const authOptions: NextAuthOptions = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
-};
+},
 
 /**
  * Wrapper for `getServerSession` so that you don't need to import the `authOptions` in every file.
@@ -122,4 +132,4 @@ export const getServerAuthSession = (ctx: {
   res: GetServerSidePropsContext["res"];
 }) => {
   return getServerSession(ctx.req, ctx.res, authOptions);
-};
+},;
