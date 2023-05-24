@@ -76,14 +76,14 @@ const AuthShowcase: React.FC = () => {
       </p>
 
       
-        {/* {sessionData && (
+        {sessionData && (
           <p className="text-center text-2xl text-white">
             Access Token:{" "}
             <span className="text-green-400">
               {sessionData.user?.access_token}
             </span>
           </p>
-        )} */}
+        )}
 
       
       <button

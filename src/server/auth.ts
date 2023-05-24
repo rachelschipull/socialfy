@@ -20,6 +20,7 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
+      access_token?: string;
       // ...other properties
       // role: UserRole;
     } & DefaultSession["user"];
@@ -98,6 +99,7 @@ export const authOptions: NextAuthOptions = {
     //   session.user.username = token.username;
     // },
   },
+},
 
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -116,7 +118,7 @@ export const authOptions: NextAuthOptions = {
      */
   ],
 }
-}
+
 
 /**
  * Wrapper for `getServerSession` so that you don't need to import the `authOptions` in every file.
