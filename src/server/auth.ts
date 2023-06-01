@@ -26,30 +26,6 @@ declare module "next-auth" {
     } & DefaultSession["user"];
   }
 }
-
-// async function refreshAccessToken(token) {
-//   try {
-//     spotifyApi.setAccessToken(token.accessToken);
-//     spotifyApi.setRefreshToken(token.refreshToken);
-
-//     const { body: refreshedToken } = await spotifyApi.refreshAccessToken();
-//     console.log("REFRESHED TOKEN", refreshedToken);
-
-//     return {
-//       ...token,
-//       accessToken: refreshedToken.access_token,
-//       accessTokenExpires: Date.now() + refreshedToken.expires_in * 1000, // 1 hour as 3600
-//       refreshToken: refreshedToken.refresh_token ?? token.refreshToken, // if refresh token is not returned, keep the old one
-//     };
-//   } catch (err) {
-//     console.error(err);
-//     return {
-//       ...token,
-//       error: "Refresh token failed",
-//     };
-//   }
-// }
-
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
  *
@@ -57,69 +33,138 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    async session({ session, user }) {
-      session = { ...session, user: {
-        ...session.user,
-        id: user.id,
-      },
-    };
+    async session({ session: existingSession, user }) {
+      if (!existingSession || !user) {
+        return existingSession;
+      }
+    //   session = { ...session, user: {
+    //     ...session.user,
+    //     id: user.id,
+    //   },
+    // };
 
-    const getToken = await prisma.account.findFirst({
-      where: {
-        userId: user.id,
+//     const getToken = await prisma.account.findFirst({
+//       where: {
+//         userId: user.id,
+//       },
+//     });
+
+//     session.user.access_token = getToken?.access_token ?? undefined;
+//       return session;
+
+   
+//   },
+// },
+
+//   adapter: PrismaAdapter(prisma),
+//   providers: [
+//     SpotifyProvider({
+//       clientId: env.SPOTIFY_CLIENT_ID,
+//       clientSecret: env.SPOTIFY_CLIENT_SECRET, 
+//       authorization: "https://accounts.spotify.com/authorize?scope=user-read-email+user-read-playback-state",
+//     })
+//     /**
+//      * ...add more providers here.
+//      *
+//      * Most other providers require a bit more work than the Discord provider. For example, the
+//      * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
+//      * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
+//      *
+//      * @see https://next-auth.js.org/providers/github
+//      */
+//   ],
+// }
+
+try {
+  const response = await prisma.user.findUnique({
+    where: {
+      id: user.id,
+    },
+    include: {
+      accounts: true,
+    },
+  });
+  if (!response) {
+    return existingSession;
+  }
+
+  // Create a new session object with all the information we need
+  const session = {
+    id: response.id,
+    name: response.name,
+    avatar: response.image,
+    account: response.accounts[0].providerAccountId,
+    token: response.accounts[0].access_token,
+  };
+
+  // Prepare some data to check if the token is about to expire or has expired
+  const now = Math.floor(Date.now() / 1000);
+  const difference = Math.floor((response.accounts[0].expires_at - now) / 60);
+  const refreshToken = response.accounts[0].refresh_token;
+  console.log(`Token still active for ${difference} minutes.`);
+
+  // If the token is older than 50 minutes, fetch a new one
+  if (difference <= 10) {
+    console.log("Token expired, fetching new one...");
+    const request = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${Buffer.from(`${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`).toString("base64")}`,
       },
+      body: `grant_type=refresh_token&refresh_token=${refreshToken}`,
+      cache: "no-cache"
     });
 
-    session.user.access_token = getToken?.access_token ?? undefined;
-      return session;
+    if (request.ok) {
+      const response = await request.json();
+      const { access_token, expires_in, refresh_token } = response;
+      const timestamp = Math.floor((Date.now() + expires_in * 1000) / 1000);
 
-    // jwt: ({ token, account, user }) => {
-    //   // If initial sign in
-    //   if (account && user) {
-    //     return {
-    //       ...token,
-    //       accessToken: account.access_token,
-    //       refreshToken: account.refresh_token,
-    //       username: account.providerAccountId,
-    //       accessTokenExpires: account.expires_at * 1000,
-    //     };
-    //   }
-    //   // Return previous token if access token is still valid
-    //   if (token && token.accessTokenExpires > Date.now()) {
-    //     console.log("EXISTING TOKEN IS VALID");
-    //     return token;
-    //   }
-    //   // Refresh token if token is expired
-    //   console.log("ACCESS TOKEN EXPIRED, REFRESHING...");
-    //   return await refreshAccessToken(token);
-    // },
-    // session: ({ session, token }) => {
-    //   session.user.accessToken = token.accessToken;
-    //   session.user.refreshToken = token.refreshToken;
-    //   session.user.username = token.username;
-    // },
-  },
-},
+      console.log(response);
+      console.log(`New access token: ${access_token}`);
 
-  adapter: PrismaAdapter(prisma),
-  providers: [
-    SpotifyProvider({
-      clientId: env.SPOTIFY_CLIENT_ID,
-      clientSecret: env.SPOTIFY_CLIENT_SECRET, 
-      authorization: "https://accounts.spotify.com/authorize?scope=user-read-email+user-read-playback-state",
-    })
-    /**
-     * ...add more providers here.
-     *
-     * Most other providers require a bit more work than the Discord provider. For example, the
-     * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
-     * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
-     *
-     * @see https://next-auth.js.org/providers/github
-     */
-  ],
+      await prisma.account.update({
+        where: {
+          provider_providerAccountId: {
+            provider: "spotify",
+            providerAccountId: session.account,
+          },
+        },
+        data: {
+          access_token,
+          expires_at: timestamp,
+          refresh_token,
+        },
+      });
+
+      session.token = access_token;
+    } else {
+      console.error(`Failed to refresh token: ${request.status} ${request.statusText}`);
+    }
+  }
+
+  return session;
+} catch (error) {
+  console.error(`Failed to fetch session: ${error}`);
+  return existingSession;
 }
+},
+    },
+    pages: {
+    newUser: "/onboarding",
+    },
+      providers: [
+    SpotifyProvider({
+    clientId: process.env.SPOTIFY_CLIENT_ID,
+    clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+    authorization: { params: { scope: "user-read-email user-read-private user-read-currently-playing user-read-playback-position user-top-read user-read-recently-played" } },
+    }),
+    ],
+  secret: process.env.NEXTAUTH_SECRET,
+};
 
+export default NextAuth(authOptions);
 
 /**
  * Wrapper for `getServerSession` so that you don't need to import the `authOptions` in every file.
