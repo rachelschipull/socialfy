@@ -31,7 +31,8 @@ declare module "next-auth" {
  *
  * @see https://next-auth.js.org/configuration/options
  */
-export const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthOptions = { 
+  adapter: PrismaAdapter(prisma),
   callbacks: {
     async session({ session: existingSession, user }) {
       if (!existingSession || !user) {
@@ -56,7 +57,7 @@ export const authOptions: NextAuthOptions = {
 //   },
 // },
 
-//   adapter: PrismaAdapter(prisma),
+//  
 //   providers: [
 //     SpotifyProvider({
 //       clientId: env.SPOTIFY_CLIENT_ID,
@@ -91,16 +92,16 @@ try {
   // Create a new session object with all the information we need
   const session = {
     id: response.id,
-    name: response.name,
-    avatar: response.image,
+    user: response.name,
     account: response.accounts[0].providerAccountId,
     token: response.accounts[0].access_token,
+    expires: response.accounts[0]?.expires_at,
   };
 
   // Prepare some data to check if the token is about to expire or has expired
   const now = Math.floor(Date.now() / 1000);
-  const difference = Math.floor((response.accounts[0].expires_at - now) / 60);
-  const refreshToken = response.accounts[0].refresh_token;
+  const difference = Math.floor((session.accounts[0].expires_at - now) / 60);
+  const refreshToken = session.accounts[0].refresh_token;
   console.log(`Token still active for ${difference} minutes.`);
 
   // If the token is older than 50 minutes, fetch a new one
