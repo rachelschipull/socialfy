@@ -23,4 +23,6 @@ To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the fo
 - [Documentation](https://create.t3.gg/)
 - [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
 
+### Current status
 
+Working on token refresh and getting it to work with typescript. Open to PRs if you're feeling fancy.
