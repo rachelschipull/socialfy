@@ -38,43 +38,7 @@ export const authOptions: NextAuthOptions = {
       if (!existingSession || !user) {
         return existingSession;
       }
-    //   session = { ...session, user: {
-    //     ...session.user,
-    //     id: user.id,
-    //   },
-    // };
 
-//     const getToken = await prisma.account.findFirst({
-//       where: {
-//         userId: user.id,
-//       },
-//     });
-
-//     session.user.access_token = getToken?.access_token ?? undefined;
-//       return session;
-
-   
-//   },
-// },
-
-//  
-//   providers: [
-//     SpotifyProvider({
-//       clientId: env.SPOTIFY_CLIENT_ID,
-//       clientSecret: env.SPOTIFY_CLIENT_SECRET, 
-//       authorization: "https://accounts.spotify.com/authorize?scope=user-read-email+user-read-playback-state",
-//     })
-//     /**
-//      * ...add more providers here.
-//      *
-//      * Most other providers require a bit more work than the Discord provider. For example, the
-//      * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
-//      * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
-//      *
-//      * @see https://next-auth.js.org/providers/github
-//      */
-//   ],
-// }
 
 try {
   const response = await prisma.user.findUnique({
@@ -178,3 +142,43 @@ export const getServerAuthSession = (ctx: {
 }) => {
   return getServerSession(ctx.req, ctx.res, authOptions);
 };
+
+
+//original auth code
+    //   session = { ...session, user: {
+    //     ...session.user,
+    //     id: user.id,
+    //   },
+    // };
+
+//     const getToken = await prisma.account.findFirst({
+//       where: {
+//         userId: user.id,
+//       },
+//     });
+
+//     session.user.access_token = getToken?.access_token ?? undefined;
+//       return session;
+
+   
+//   },
+// },
+
+//  
+//   providers: [
+//     SpotifyProvider({
+//       clientId: env.SPOTIFY_CLIENT_ID,
+//       clientSecret: env.SPOTIFY_CLIENT_SECRET, 
+//       authorization: "https://accounts.spotify.com/authorize?scope=user-read-email+user-read-playback-state",
+//     })
+//     /**
+//      * ...add more providers here.
+//      *
+//      * Most other providers require a bit more work than the Discord provider. For example, the
+//      * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
+//      * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
+//      *
+//      * @see https://next-auth.js.org/providers/github
+//      */
+//   ],
+// }
