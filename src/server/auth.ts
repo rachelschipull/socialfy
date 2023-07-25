@@ -38,29 +38,11 @@ export const authOptions: NextAuthOptions = {
       if (!existingSession || !user) {
         return existingSession;
       }
-
-
-try {
-  const response = await prisma.user.findUnique({
-    where: {
-      id: user.id,
-    },
-    include: {
-      accounts: true,
-    },
-  });
-  if (!response) {
-    return existingSession;
-  }
-
-  // Create a new session object with all the information we need
-  const session = {
-    id: response.id,
-    user: response.name,
-    account: response.accounts[0].providerAccountId,
-    token: response.accounts[0].access_token,
-    expires: response.accounts[0]?.expires_at,
-  };
+      const session = { ...existingSession, user: {
+        ...existingSession.user,
+        id: user.id,
+      },
+    };
 
     const getToken = await prisma.account.findFirst({
       where: {
@@ -184,43 +166,3 @@ export const getServerAuthSession = (ctx: {
 }) => {
   return getServerSession(ctx.req, ctx.res, authOptions);
 };
-
-
-//original auth code
-    //   session = { ...session, user: {
-    //     ...session.user,
-    //     id: user.id,
-    //   },
-    // };
-
-//     const getToken = await prisma.account.findFirst({
-//       where: {
-//         userId: user.id,
-//       },
-//     });
-
-//     session.user.access_token = getToken?.access_token ?? undefined;
-//       return session;
-
-   
-//   },
-// },
-
-//  
-//   providers: [
-//     SpotifyProvider({
-//       clientId: env.SPOTIFY_CLIENT_ID,
-//       clientSecret: env.SPOTIFY_CLIENT_SECRET, 
-//       authorization: "https://accounts.spotify.com/authorize?scope=user-read-email+user-read-playback-state",
-//     })
-//     /**
-//      * ...add more providers here.
-//      *
-//      * Most other providers require a bit more work than the Discord provider. For example, the
-//      * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
-//      * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
-//      *
-//      * @see https://next-auth.js.org/providers/github
-//      */
-//   ],
-// }
