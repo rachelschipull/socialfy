@@ -25,4 +25,4 @@ To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the fo
 
 ### Current status
 
-Working on token refresh and getting it to work with typescript. Open to PRs if you're feeling fancy.
+Working on token refresh and getting it to work with typescript. Open to PRs if you're feeling fancy. Currently the auth.ts is silly putty, if you are trying run this locally, fyi.
